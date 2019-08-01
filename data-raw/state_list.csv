@@ -1,0 +1,55 @@
+state,state_lower,state_code
+ALABAMA,alabama,AL
+ALASKA,alaska,AK
+ARIZONA,arizona,AZ
+ARKANSAS,arkansas,AR
+CALIFORNIA,california,CA
+COLORADO,colorado,CO
+CONNECTICUT,connecticut,CT
+DELAWARE,delaware,DE
+FLORIDA,florida,FL
+GEORGIA,georgia,GA
+HAWAII,hawaii,HI
+IDAHO,idaho,ID
+ILLINOIS,illinois,IL
+INDIANA,indiana,IN
+IOWA,iowa,IA
+KANSAS,kansas,KS
+KENTUCKY,kentucky,KY
+LOUISIANA,louisiana,LA
+MAINE,maine,ME
+MARYLAND,maryland,MD
+MASSACHUSETTS,massachusetts,MA
+MICHIGAN,michigan,MI
+MINNESOTA,minnesota,MN
+MISSISSIPPI,mississippi,MS
+MISSOURI,missouri,MO
+MONTANA,montana,MT
+NEBRASKA,nebraska,NE
+NEVADA,nevada,NV
+NEW HAMPSHIRE,new hampshire,NH
+NEW JERSEY,new jersey,NJ
+NEW MEXICO,new mexico,NM
+NEW YORK,new york,NY
+NORTH CAROLINA,north carolina,NC
+NORTH DAKOTA,north dakota,ND
+OHIO,ohio,OH
+OKLAHOMA,oklahoma,OK
+OREGON,oregon,OR
+PENNSYLVANIA,pennsylvania,PA
+RHODE ISLAND,rhode island,RI
+SOUTH CAROLINA,south carolina,SC
+SOUTH DAKOTA,south dakota,SD
+TENNESSEE,tennessee,TN
+TEXAS,texas,TX
+UTAH,utah,UT
+VERMONT,vermont,VT
+VIRGINIA,virginia,VA
+WASHINGTON,washington,WA
+WEST VIRGINIA,west virginia,WV
+WISCONSIN,wisconsin,WI
+WYOMING,wyoming,WY
+GUAM,guam,GU
+PUERTO RICO,puerto rico,PR
+VIRGIN ISLANDS,virgin islands,VI
+DISTRICT OF COLUMBIA,district of columbia,DC
