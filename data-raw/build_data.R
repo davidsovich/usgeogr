@@ -60,14 +60,15 @@ adjacent_county_df = adjacent_county_df %>%
   dplyr::mutate(
     county = ifelse(fips_code == '35013', "Dona Ana County, NM", county),
     neighbor = ifelse(neighbor_fips_code == '35013', "Dona Ana County, NM", neighbor)
-  ) %>%
-  # Create fips numeric - string distinctions
-  dplyr::mutate(
-    fips_string = fips_code,
-    fips_code = as.numeric(fips_code),
-    neighbor_fips_string = neighbor_fips_code,
-    neighbor_fips_code = as.numeric(neighbor_fips_code)
   )
+  #%>%
+  # Create fips numeric - string distinctions
+  #dplyr::mutate(
+  #  fips_string = fips_code,
+  #  fips_code = as.numeric(fips_code),
+  #  neighbor_fips_string = neighbor_fips_code,
+  #  neighbor_fips_code = as.numeric(neighbor_fips_code)
+  #)
 
 # Split state and county names and merge back onto file
 
@@ -117,12 +118,19 @@ adjacent_county_df = adjacent_county_df %>%
     !(county_state %in% c("AK", "HI"))
   ) %>%
   # Merge on county coordinates
+  dplyr::mutate(
+    temp_fips_code = as.numeric(fips_code)
+  ) %>%
   dplyr::left_join(
     y = temp_df %>%
       select(fips_code, population, lat, long),
-    by = c("fips_code" = "fips_code")
+    by = c("temp_fips_code" = "fips_code")
   ) %>%
+  dplyr::select(-one_of("temp_fips_code")) %>%
   # Merge on neighbor county coordinates
+  dplyr::mutate(
+    temp_neighbor_fips_code = as.numeric(neighbor_fips_code)
+  ) %>%
   dplyr::left_join(
     y = temp_df %>%
       select(fips_code, population, lat, long) %>%
@@ -132,18 +140,19 @@ adjacent_county_df = adjacent_county_df %>%
         neighbor_lat = lat,
         neighbor_long = long
       ),
-    by = c("neighbor_fips_code" = "neighbor_fips_code")
-  ) %>%
+    by = c("temp_neighbor_fips_code" = "neighbor_fips_code")
+  )  %>%
+  dplyr::select(-one_of("temp_neighbor_fips_code")) %>%
   # Reorder columns
   dplyr::select(
-    county_name, county_state, fips_code, fips_string,
+    county_name, county_state, fips_code,
     population, lat, long,
-    neighbor_name, neighbor_state, neighbor_fips_code, neighbor_fips_string,
+    neighbor_name, neighbor_state, neighbor_fips_code,
     neighbor_population, neighbor_lat, neighbor_long
   ) %>%
   # Remove county matches to themselves
   dplyr::filter(
-    fips_string != neighbor_fips_string
+    fips_code != neighbor_fips_code
   )
 
 # Save data
@@ -157,7 +166,7 @@ rm(temp_county, temp_neighbor, temp_df)
 # Wrangle adjacent county data and merge on coordinates
 county_df = adjacent_county_df %>%
   dplyr::distinct(
-    county_name, county_state, fips_code, fips_string,
+    county_name, county_state, fips_code,
     population, lat, long
   )
 
@@ -184,20 +193,18 @@ zip_df = zip_df %>%
   dplyr::distinct(zip, .keep_all = TRUE) %>%
   # Cast as numerics
   dplyr::mutate(
-    fips_string = county,
-    fips_code = as.numeric(fips_string),
-    zip_string = zip,
-    zip_numeric = as.numeric(zip_string)
+    fips_code = county,
+    zip_code = zip,
   ) %>%
   dplyr::select(
-    zip_string, zip_numeric, fips_string, fips_code
+    zip_code, fips_code
   ) %>%
   # Merge on state information and restrict to U.S. ZIP codes
   dplyr::inner_join(
     y = county_df %>%
-      dplyr::select(fips_string, county_state) %>%
+      dplyr::select(fips_code, county_state) %>%
       dplyr::rename(state = county_state),
-    by = c("fips_string" = "fips_string")
+    by = c("fips_code" = "fips_code")
   )
 
 # Append on ZCTA (subset of ZIP) data
@@ -207,7 +214,7 @@ zip_df = zip_df %>%
       dplyr::select(
         -dplyr::one_of(c("zip_numeric", "land_meters", "water_meters"))
       ),
-    by = c("zip_string" = "zip_char")
+    by = c("zip_code" = "zip_char")
   )
 
 # Save data
@@ -293,43 +300,49 @@ usethis::use_data(border_coord_df, overwrite = TRUE)
 rm(temp_df_storage, between_points, temp_df)
 
 
-# ---- Border counties ----------------------------------------------------------------------------
+# ---- Cross-border county pairs ------------------------------------------------------------------
 
 # Wrangle the data
-border_county_pairs_df = adjacent_county_df %>%
+cbcp_df = adjacent_county_df %>%
   dplyr::filter(county_state != neighbor_state) %>%
   dplyr::mutate(
-    pair_id = ifelse(
+    cbcp_id = ifelse(
       fips_code <= neighbor_fips_code,
-      paste0(fips_string, "_", neighbor_fips_string),
-      paste0(neighbor_fips_string, "_", fips_string)
+      paste0(fips_code, "_", neighbor_fips_code),
+      paste0(neighbor_fips_code, "_", fips_code)
+    ),
+    state_border_id = ifelse(
+      county_state <= neighbor_state,
+      paste0(county_state, "-", neighbor_state),
+      paste0(neighbor_state, "-", county_state)
     )
   )
 
-temp_df = select(border_county_pairs_df, pair_id, lat, long, neighbor_lat)
+# Calculate distances between counties
+cbcp_df = cbcp_df %>%
+  dplyr::mutate(
+    dist_bt_centers = county_dist(fips_code, neighbor_fips_code)
+  )
+
+# Reduce variables
+cbcp_df = cbcp_df %>%
+  dplyr::select(
+    fips_code, county_state,
+    cbcp_id, state_border_id,
+    neighbor_fips_code, neighbor_state,
+    dist_bt_centers
+  )
+
+# Save the file
+usethis::use_data(cbcp_df, overwrite = TRUE)
+
+# ---- Max method pairs ---------------------------------------------------------------------------
+
+# ---- One and done pairs -------------------------------------------------------------------------
+
+# ---- Whole border pairs -------------------------------------------------------------------------
 
 
-#Load Packages
-require(tidyverse)
-
-#Load the Adjacent County Data
-temp_df = rGeography.list_adjacent_counties()
-
-#Keep Only Pairs Which Are Cross-Border and Create Unique Identifiers
-temp_df = temp_df %>% filter( county_state != neighbor_state ) %>%
-  mutate( pair_identifier = ifelse( fips_code <= neighbor_fips_code,
-                                    paste0(fips_string, "_", neighbor_fips_string),
-                                    paste0(neighbor_fips_string, "_", fips_string) ) )
-
-#Calculate Distance Between Cross-Border Pair Population Centers
-temp_df = temp_df %>% mutate( distance_between = rGeography.distance_between_county_population_centers( fips_code, neighbor_fips_code ) )
-
-#Save the File for Distribution
-temp_file = paste0(geography_data_directories(), "border_county_dataset.csv")
-if( !file.exists(temp_file) ){ write.csv( temp_df, file = temp_file ) }
-
-#Return the Dataset
-return( temp_df )
 
 
 

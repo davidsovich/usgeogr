@@ -4,12 +4,11 @@
 \name{county_df}
 \alias{county_df}
 \title{Continental U.S. counties}
-\format{A data frame with 3,109 rows and 7 variables:
+\format{A data frame with 3,109 rows and 6 variables:
 \describe{
   \item{county_name}{Name of county.}
   \item{county_state}{Postal service code of county.}
-  \item{fips_code}{County FIPS code for county, in numeric format.}
-  \item{fips_string}{County FIPS code for county, in original string format.}
+  \item{fips_code}{County FIPS code for county, in original string format.}
   \item{population}{Population of county as of 2010.}
   \item{lat}{Latitude of county center of population as of 2010.}
   \item{long}{Longitude of county center of population as of 2010.}

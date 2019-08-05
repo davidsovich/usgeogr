@@ -4,19 +4,17 @@
 \name{adjacent_county_df}
 \alias{adjacent_county_df}
 \title{Adjacent continental U.S. counties}
-\format{A data frame with 18,474 rows (3,109 counties) and 14 variables with unorder duplicates:
+\format{A data frame with 18,474 rows (3,109 counties) and 12 variables with unorder duplicates:
 \describe{
   \item{county_name}{Name of first county.}
   \item{county_state}{Postal service code of first county.}
-  \item{fips_code}{County FIPS code for first county, in numeric format.}
-  \item{fips_string}{County FIPS code for first county, in original string format.}
+  \item{fips_code}{County FIPS code for first county, in original string format.}
   \item{population}{Population of first county as of 2010.}
   \item{lat}{Latitude of first county center of population as of 2010.}
   \item{long}{Longitude of first county center of population as of 2010.}
   \item{neighbor_name}{Name of adjacent neighboring county of first county (could be many).}
   \item{neighbor_state}{Postal service code of neigboring county.}
-  \item{neighbor_fips_code}{County FIPS code for neigboring county, in numeric format.}
-  \item{neighbor_string}{County FIPS code for neigboring county, in original string format.}
+  \item{neighbor_fips_code}{County FIPS code for neigboring county, in original string format.}
   \item{neighbor_population}{Population of neigboring county as of 2010.}
   \item{neighbor_lat}{Latitude of neigboring county center of population as of 2010.}
   \item{neighbor_long}{Longitude of neigboring county center of population as of 2010.}

@@ -12,5 +12,6 @@ LazyData: true
 Imports: 
     dplyr,
     zoo,
-    readr
+    readr,
+    geosphere
 RoxygenNote: 6.1.1
