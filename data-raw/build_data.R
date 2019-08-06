@@ -438,7 +438,7 @@ cpcp_df = cpcp_df %>%
   dplyr::mutate(total_fips_obs_2 = dplyr::n()) %>%
   dplyr::ungroup() %>%
   dplyr::mutate(fips_pair_obs = total_fips_obs_1 + total_fips_obs_2) %>%
-  dplyr::arrange(fips_pair_obs, fips_pair)
+  dplyr::arrange(fips_pair_obs, fips_pair, fips_code)
 
 # Construct couplets - algorithm begins with county pair with least number of matches
 temp_df = cpcp_df
@@ -512,7 +512,149 @@ usethis::use_data(cpcp_df, overwrite = TRUE)
 rm(temp_df, couplet_vector, inner_temp_df)
 
 
-# ---- One and done pairs -------------------------------------------------------------------------
+# ---- Max neighbor county assignments  -----------------------------------------------------------
+
+# Wrangle the data
+mxcp_df = adjacent_county_df %>%
+  dplyr::filter(county_state != neighbor_state)
+
+# Count number of times neighbor is adjacent to another county
+temp_df = mxcp_df %>%
+  dplyr::group_by(neighbor_fips_code) %>%
+  summarise(num_neighbor = dplyr::n())
+
+# Merge on matches for counties and neighbors
+mxcp_df = mxcp_df %>%
+  dplyr::left_join(
+    y = temp_df %>%
+      dplyr::rename(num_county = num_neighbor),
+    by = c("fips_code" = "neighbor_fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = temp_df,
+    by = c("neighbor_fips_code" = "neighbor_fips_code")
+  ) %>%
+  dplyr::select(
+    fips_code, county_state, neighbor_fips_code,
+    num_county, num_neighbor
+  )
+
+# Assign cluster for each adjacent pair based on observation with more adjacent counties
+mxcp_df = mxcp_df %>%
+  dplyr::mutate(
+    mxcp_id = ifelse(
+      num_county >= num_neighbor,
+      fips_code,
+      neighbor_fips_code
+    ),
+    mxcp_counts = ifelse(
+      num_county >= num_neighbor,
+      num_county,
+      num_neighbor
+    )
+  )
+
+# Count number of distinct counties in each cluster
+mxcp_df = mxcp_df %>%
+  dplyr::group_by(mxcp_id) %>%
+  dplyr::mutate(distinct_in_cluster = dplyr::n_distinct(fips_code)) %>%
+  dplyr::ungroup()
+
+# First-pass matches: most distinct observations in cluster
+temp_df = mxcp_df %>%
+  dplyr::arrange(fips_code, dplyr::desc(distinct_in_cluster)) %>%
+  dplyr::distinct(fips_code, .keep_all = TRUE) %>%
+  dplyr::group_by(mxcp_id) %>%
+  dplyr::mutate(num_in_cluster = dplyr::n()) %>%
+  dplyr::ungroup() %>%
+  data.frame()
+
+# First-pass matches: set singleton clusters to NA
+temp_df = temp_df %>%
+  dplyr::mutate(
+    mxcp_id = ifelse(
+      num_in_cluster < 2,
+      NA,
+      mxcp_id
+    )
+  )
+
+# Second-pass matches: merge on first-pass and neighbor assignments
+mxcp_df = mxcp_df %>%
+  dplyr::inner_join(
+    y = temp_df %>%
+      dplyr::select(fips_code, mxcp_id) %>%
+      dplyr::rename(county_mxcp_id = mxcp_id),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::inner_join(
+    y = temp_df %>%
+      dplyr::select(fips_code, mxcp_id, num_in_cluster) %>%
+      dplyr::rename(
+        neighbor_mxcp_id = mxcp_id,
+        neighbor_num_in_cluster = num_in_cluster
+      ),
+    by = c("neighbor_fips_code" = "fips_code")
+  )
+
+# Second-pass matches: assign to neighbor's cluster, sorted by largest
+mxcp_df = mxcp_df %>%
+  dplyr::mutate(
+    relaxed_mxcp_id = ifelse(
+      !is.na(county_mxcp_id),
+      county_mxcp_id,
+      neighbor_mxcp_id
+    ),
+    relaxed_mxcp_id = ifelse(
+      is.na(relaxed_mxcp_id),
+      ifelse(
+        fips_code <= neighbor_fips_code,
+        fips_code,
+        neighbor_fips_code
+      ),
+      relaxed_mxcp_id
+    ),
+    sort_flag = ifelse(
+      !is.na(relaxed_mxcp_id),
+      0,
+      1
+    )
+  ) %>%
+  dplyr::arrange(
+    fips_code, sort_flag,
+    dplyr::desc(neighbor_num_in_cluster), relaxed_mxcp_id
+  ) %>%
+  dplyr::distinct(
+    fips_code, .keep_all = TRUE
+  )
+
+# Count observations in each cluster
+mxcp_df = mxcp_df %>%
+  dplyr::select(
+    fips_code, county_state,
+    county_mxcp_id, relaxed_mxcp_id
+  ) %>%
+  dplyr::group_by(relaxed_mxcp_id) %>%
+  dplyr::mutate(num_relaxed = dplyr::n()) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(
+    relaxed_mxcp_id = ifelse(
+      num_relaxed < 2,
+      NA,
+      relaxed_mxcp_id
+    )
+  ) %>%
+  dplyr::rename(mxcp_id = county_mxcp_id) %>%
+  dplyr::mutate(
+    mxcp_remove_flag = as.numeric(is.na(mxcp_id)),
+    relaxed_mxcp_remove_flag = as.numeric(is.na(relaxed_mxcp_id))
+  )
+
+# Save the file
+usethis::use_data(mxcp_df, overwrite = TRUE)
+
+# Remove temporary files
+rm(temp_df)
 
 # ---- Cross-border ZIP codes ---------------------------------------------------------------------
 

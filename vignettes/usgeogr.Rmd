@@ -18,73 +18,99 @@ knitr::opts_chunk$set(
 library(usgeogr)
 ```
 
-Economists often utilize variation across geographic regions as natural
-experiments. For example, GHKS (2019) utilize differences in the minimum wage
-across state borders over time to estimate its employment effects.[^1]
+Economists often utilize differences in policies across geographic regions as natural
+experiments.[^1]
 
-[^1]: Gopalan, Hamilton, Kalda, and Sovich (2019). "State minimum wage changes and employment:
-Evidence from one million hourly wage workers". Working paper.
+[^1]: For example,  Gopalan, Hamilton, Kalda, and Sovich (2019) utilize differences in the minimum 
+wage across state borders to estimate the employment effects.
 
-The `usgeogr` package helps streamline such analyses by providing a set of datsets and functions 
-for commonly studied U.S. geographic units that can be quickly combined with spatial identification
-strategies. 
+The `usgeogr` package helps streamline the use of such spatial identification strategies. 
+The package provides a set of datasets and functions for working with the most common U.S. 
+geographic units used in these strategies.
 
-This document introduces you to `usgeogr`'s datasets and functions. For more information,
-please see the [Github](https://github.com/davidsovich/usgeogr). 
+This document introduces you to the `usgeogr` package.
+For more information, please visit the Github [page](https://github.com/davidsovich/usgeogr). 
+ 
 
-## State data
+ 
+# Datasets
 
-`state_df` provides a list of all U.S. states and their postal codes.
+## States
 
-## County data
+`state_df` provides a list of U.S. states and postal codes.
+
+`border_coord_df` provides coordinates for each mile long segment of state
+borders in the continental U.S.
+
+## Counties
+
+Counties are often studied because they often represent the most granular unit of analysis
+for which high frequency microeconomic data is available. The below datasets can
+help streamline county-level analyses.
 
 ### Baseline datasets
 
-`county_df` provides a list of all counties in the continental United States. The fields include 
+`county_df` provides a list of counties in the continental U.S. The fields include 
 each county's FIPS identifier, population (as of 2010), and the latitude and longitude
 of its population center. 
 
-`adjacent_county_df` provides a list of all adjacent counties in the continental United States.
-Each row corresponds to a county and its adjacent neighbor. Each adjacent county pair will appear
-twice in the dataset. 
+`adjacent_county_df` provides a list of all adjacent counties in the continental U.S.
+Each row corresponds to an adjacent county pair. Each adjacent county pair will appear
+twice in the dataset (order matters). 
 
-### Cross-border datasets for county-level studies
+### Cross-border datasets
 
-`cbcp_df` provides a list of all adjacent cross-border county pairs in the United States.[^2] Each row 
-corresponds to a border county. If a border county has $p >1$ cross-border neighbors, then it will
-have $p>1$ entries in the dataset. There are more unique cross-border county pairs 
-(1,308) than unique border counties (1,184). 
+A common identification strategy is to examine differences in state-level policies across adjacent
+counties that straddle state borders. In such an identification strategy, each border county needs
+to be matched with an adjacent cross-border neighbor. Panel estimators then exploit differences
+in policies across adjacent border counties within the same cross-border pairing over time.
+
+An issue that arises with such an identification strategy is that border counties are often 
+(in fact, always) adjacent to more than one cross-border neighbor. Hence, there is not a 
+unique partitioning of the set of border counties into cross-border adjacent pairs. The 
+methods for addressing this issue differ by the unit of analysis in the study.
+
+#### County-level studies
+
+If the unit of analysis is at the county level, then the most common method for addressing
+non-uniqueness is to construct a full dataset of adjacent cross-border county pairs (including
+replicates of some counties).[^2] 
+
+`cbcp_df` assigns border counties to cross-border county pairs following the methods in
+Dube, Lester, and Reich (ReSTAT, 2010). If a border county has $p >1$ cross-border neighbors, then
+it will have $p>1$ entries in the dataset. There are 1,184 unique border counties, 
+1,308 cross-border county pairs, and 2,616 rows in the dataset.
 
 [^2]: An adjacent cross-border county pair is defined as a pair of adjacent border counties that
 reside in different states. A single border county can belong to multiple adjacent cross-border 
 county pairs. The definition can be traced to Dube, Lester, and Reich (ReSTAT, 2010).
 
-### Cross-border datasets for within county-level studies
+#### Within county-level studies
 
-Identification strategies that exploit variation within cross-border county pairs cannot be easily 
-transported to analyses in which the unit of analysis is more granular than the county-level (e.g.,
-the individual level). In such cases, each border county must be assigned to a distinct "cluster"
-for which to exploit within-cluster variation across units. Unfortunately, there is no unique 
-method for constructing such "clusters".[^3] To address the problem of non-uniqueness, this packages
-provides four possible mappings: 
+If the unit of analysis is more granular than the county level (e.g., the individual level), then
+the replicate-based method of Dube, Lester, and Reich (ReSTAT, 2010) cannot be implemented without 
+massively increasing the sample size. Instead, each border county needs to be assigned to a single
+distinct "cross-border cluster". Panel estimators then exploit variation within each cross-border
+cluster over time.
 
-1. `sbscp_df` uniquely maps each border county to an adjacent state border pair segment (e.g., 
-AL-FL). If a border county resides on multiple state border pair segments, then the 
-border segment closest to the county's population center is retained. A small set of counties are
-mapped to a state border pair segment with only one state or county represented.[^4]
+Because the mapping of border counties to cross-border clusters will not be unique, 
+`usgeogr` provides several choices:[^3]
 
-2. `cpcp_df` uniquely maps each border county to a "couplet" of two counties. Uses an algorithm
-that maximizes the number of distinct clusters with exactly two cross-border members. Because of 
-the strict requirement of two members per cluster, a substantial fraction of the counties in the
-data are left unmatched. 
+1. `sbscp_df` assigns border counties to clusters defined by adjacent state border pair segments
+(e.g., AL-FL, NV-UT). If a border county is adjacent to more than one state border segment, then 
+the border county is assigned to the closest border segment to its population center.[^4]
 
-3. `rcpcp_df` relaxes the strict membership cap in the `cpcp_df` and maps unmatched counties to
-their closest cross-border neighbor pair. 
+2. `cpcp_df` assigns border counties to cross-border clusters using the "couplet" algorithm or the
+"relaxed couplet" algorithm.[^5] The couplet algorithm sequentially assigns counties to clusters 
+of size two. The relaxed couplet algorithm allows for more than two counties per cluster. Counties
+can only belong to one cluster. 
 
-4. `mxcp_df` assings each county to a grouping formed by its bordering county (including itself)
-with the most direct cross-border connections. 
+3. `mxcp_df` assigns border counties to cross-border clusters using the "max-method" algorithm
+or the "relaxed max-method" algorithm.[^6]. The max-method and relaxed max-method algorithms
+assigns counties to clusters based on their centrality (i.e., the number of counties they border). 
+Counties can only belong to one cluster.  
 
-5. `rmxcp_df` places unmathced into BLAH. 
+Note that some counties may be unassigned to a cluster using the couplet or max-method algorithms.
 
 [^3]: This is because some counties have several cross-border adjacent neighbors. For example, 
 counties may be geographically staggered so that each county borders approximately 2 other 
@@ -92,30 +118,67 @@ cross-state counties (creating overlap). Only if each cross-broder county had a 
 neighbor could we have a unique and natural mapping of pairs for the groupings. However, there is
 not a single such unique mapping in the United States.
 
-[^4]: Hence, variation from these counties is discarded when conducting comparisons across 
-state borders within state border segment pairs. 
+[^4]: A small set of counties will be mapped to a state border segment for which only one
+county or state is eventually assigned. Hence, variation from these border counties will be
+discarded in panel studies that utilize spatial variation across time. 
 
-## ZIP code data
+[^5]: The couplet algorithm proceeds as follows. Start with all counties in a donor pool. 
+Select the first county. Pair the first county with one of its adjacent cross-border neighbors. 
+This forms a cross-border cluster; assign no other counties to this cross-border cluster. Remove
+both assigned counties from the donor pool. Select another county and repeat until either no
+counties remain in the donor pool or all counties have been selected. If there are no possible 
+cross-border assignments for a county in the donor pool, leave it unassigned but keep it in the
+donor pool. For each iteration, start by selecting the county and cross-border neighbor who are 
+adjacent to the fewest counties (unconditionally). The algorithm leaves about 20 percent of counties
+without an assigned cluster; each cluster has exactly two members. For the relaxed couplet 
+algorithm, assign the remaining counties to the cluster of their alphabetically first cross-border
+neighbor. These clusters will have more than two constituent counties. 
+
+[^6]: The max-method algorithm proceeds as follows. For each county, calculate how many counties
+it is adjacent to other counties that lie across state borders. On the first pass of the algorithm, 
+assign each county an identifer that corresponds to either itself or its adjacent county with
+the most cross-border neighbors, whichever has more cross-border neighbors (i.e., the center
+of gravity). If this identifier has at least two counties assigned to it, then let this county's 
+FIPS code define a max-method cluster. If this identifier does not have at least two counties
+assigned to it, then mark the max-method cluster as unassigned. On the second pass, the relaxed
+max-method algorithm assigns unassigned counties to to max-method cluster of one of their
+cross-border neighbors. If this cross-border neighbor is also not matched, then a new identifier
+is constructed from their pairing based on the numerical order of their FIPS codes. Finally, 
+we check again for at least two members in each cluster. Mark counties with only one member
+in their cluster as unassigned. Roughly 25% of counties are unassigned to a cluster
+using the max-method algorithm, and 4.3% are unassigned using relaxed max-method algorithm.
+
+
+## ZIP codes
+
+ZIP codes are another common unit of analysis, especially in the field of consumer credit. The
+below datasets help streamline ZIP code-level analyses. 
 
 ### Baseline datasets
 
-`zip_df` provides a list of all ZIP codes in the continental United States. Information on 
-population, centroid location, and land usage is populated for ZIP codes that map into ZCTAs.
+`zip_df` provides a list of all ZIP codes in the continental United States. If the ZIP can be
+mapped to a ZCTA, then the dataset provides information on its population (as of 2010), the
+coordinates of its centroid, and the distribution of land, water, and housing usage. 
 
-### Cross-border datasets for ZIP code and within-ZIP code studies
-
-BLAH
-
-## Functions
-
-### County functions
+### Cross-border datasets defined by counties
 
 BLAH
 
-### ZIP code functions
+### Cross-border datasets defined by distance
 
 BLAH
 
+# Functions
+
+## Distance functions
+
+`county_dist` returns the distance between county population centers. `zip_dist` returns the 
+distance between ZCTA centroids. Both functions are vectorized.
+
+`county_to_state_border` returns the distance between a county population center and the
+nearest state border. `zip_to_state_border` returns the distance between a ZCTA centroid and
+the nearest state border. Both functions are vectorized. Both functions provide an option for
+returning the nearest border identifier instead of the distance. 
 
 
 
