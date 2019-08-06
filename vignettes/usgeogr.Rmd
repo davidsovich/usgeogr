@@ -1,0 +1,130 @@
+---
+title: "Introduction to usgeogr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{usgeogr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, eval = FALSE}
+library(usgeogr)
+```
+
+Economists often utilize variation across geographic regions as natural
+experiments. For example, GHKS (2019) utilize differences in the minimum wage
+across state borders over time to estimate its employment effects.[^1]
+
+[^1]: Gopalan, Hamilton, Kalda, and Sovich (2019). "State minimum wage changes and employment:
+Evidence from one million hourly wage workers". Working paper.
+
+The `usgeogr` package helps streamline such analyses by providing a set of datsets and functions 
+for commonly studied U.S. geographic units that can be quickly combined with spatial identification
+strategies. 
+
+This document introduces you to `usgeogr`'s datasets and functions. For more information,
+please see the [Github](https://github.com/davidsovich/usgeogr). 
+
+## State data
+
+`state_df` provides a list of all U.S. states and their postal codes.
+
+## County data
+
+### Baseline datasets
+
+`county_df` provides a list of all counties in the continental United States. The fields include 
+each county's FIPS identifier, population (as of 2010), and the latitude and longitude
+of its population center. 
+
+`adjacent_county_df` provides a list of all adjacent counties in the continental United States.
+Each row corresponds to a county and its adjacent neighbor. Each adjacent county pair will appear
+twice in the dataset. 
+
+### Cross-border datasets for county-level studies
+
+`cbcp_df` provides a list of all adjacent cross-border county pairs in the United States.[^2] Each row 
+corresponds to a border county. If a border county has $p >1$ cross-border neighbors, then it will
+have $p>1$ entries in the dataset. There are more unique cross-border county pairs 
+(1,308) than unique border counties (1,184). 
+
+[^2]: An adjacent cross-border county pair is defined as a pair of adjacent border counties that
+reside in different states. A single border county can belong to multiple adjacent cross-border 
+county pairs. The definition can be traced to Dube, Lester, and Reich (ReSTAT, 2010).
+
+### Cross-border datasets for within county-level studies
+
+Identification strategies that exploit variation within cross-border county pairs cannot be easily 
+transported to analyses in which the unit of analysis is more granular than the county-level (e.g.,
+the individual level). In such cases, each border county must be assigned to a distinct "cluster"
+for which to exploit within-cluster variation across units. Unfortunately, there is no unique 
+method for constructing such "clusters".[^3] To address the problem of non-uniqueness, this packages
+provides four possible mappings: 
+
+1. `sbscp_df` uniquely maps each border county to an adjacent state border pair segment (e.g., 
+AL-FL). If a border county resides on multiple state border pair segments, then the 
+border segment closest to the county's population center is retained. A small set of counties are
+mapped to a state border pair segment with only one state or county represented.[^4]
+
+2. `cpcp_df` uniquely maps each border county to a "couplet" of two counties. Uses an algorithm
+that maximizes the number of distinct clusters with exactly two cross-border members. Because of 
+the strict requirement of two members per cluster, a substantial fraction of the counties in the
+data are left unmatched. 
+
+3. `rcpcp_df` relaxes the strict membership cap in the `cpcp_df` and maps unmatched counties to
+their closest cross-border neighbor pair. 
+
+4. `mxcp_df` assings each county to a grouping formed by its bordering county (including itself)
+with the most direct cross-border connections. 
+
+5. `rmxcp_df` places unmathced into BLAH. 
+
+[^3]: This is because some counties have several cross-border adjacent neighbors. For example, 
+counties may be geographically staggered so that each county borders approximately 2 other 
+cross-state counties (creating overlap). Only if each cross-broder county had a single cross-border
+neighbor could we have a unique and natural mapping of pairs for the groupings. However, there is
+not a single such unique mapping in the United States.
+
+[^4]: Hence, variation from these counties is discarded when conducting comparisons across 
+state borders within state border segment pairs. 
+
+## ZIP code data
+
+### Baseline datasets
+
+`zip_df` provides a list of all ZIP codes in the continental United States. Information on 
+population, centroid location, and land usage is populated for ZIP codes that map into ZCTAs.
+
+### Cross-border datasets for ZIP code and within-ZIP code studies
+
+BLAH
+
+## Functions
+
+### County functions
+
+BLAH
+
+### ZIP code functions
+
+BLAH
+
+
+
+
+
+
+
+
+
+
+
+
+

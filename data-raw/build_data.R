@@ -19,6 +19,7 @@
 
 library(tidyverse)
 library(geosphere)
+devtools::load_all()
 
 # ---- US states ----------------------------------------------------------------------------------
 
@@ -229,7 +230,8 @@ rm(temp_df)
 # Load the data
 border_coord_df = readr::read_csv(
   file = "./data-raw/state_borders.csv"
-)
+) %>%
+  dplyr::mutate(st1st2 = gsub("IL-IA", "IA-IL", st1st2))
 
 # Wrangle the data
 border_coord_df = border_coord_df %>%
@@ -336,11 +338,183 @@ cbcp_df = cbcp_df %>%
 # Save the file
 usethis::use_data(cbcp_df, overwrite = TRUE)
 
-# ---- Max method pairs ---------------------------------------------------------------------------
+# ---- State-border strip county assignments -----------------------------------------------------
+
+# Wrangle the data
+sbscp_df = adjacent_county_df %>%
+  dplyr::filter(county_state != neighbor_state) %>%
+  dplyr::mutate(
+    state_border_id = ifelse(
+      county_state <= neighbor_state,
+      paste0(county_state, "-", neighbor_state),
+      paste0(neighbor_state, "-", county_state)
+    )
+  ) %>%
+  dplyr::select(fips_code, county_state, state_border_id)
+
+# Calculate closest distances to borders
+sbscp_df = sbscp_df %>%
+  dplyr::mutate(
+    dist_to_border = county_to_state_border(
+      fips_code = fips_code
+    ),
+    border_dist_ref = county_to_state_border(
+      fips_code = fips_code,
+      return_state_border_id = TRUE
+    )
+  )
+
+# Calculate number of mathces for each fips_code (some will = 0; closest to non-adjacent border!)
+sbscp_df = sbscp_df %>%
+  dplyr::group_by(fips_code) %>%
+  dplyr::mutate(
+    num_obs = dplyr::n(),
+    num_matches = sum(as.numeric(border_dist_ref == state_border_id))
+  ) %>%
+  dplyr::ungroup()
+
+# Keep closest observation or alphabetically first observation if zero matches
+sbscp_df = sbscp_df %>%
+  dplyr::arrange(fips_code, state_border_id) %>%
+  dplyr::distinct(fips_code, .keep_all = TRUE) %>%
+  dplyr::mutate(
+    final_id = ifelse(
+      num_matches >= 1,
+      border_dist_ref,
+      state_border_id
+    )
+  )
+
+# Limit variable set
+sbscp_df = sbscp_df %>%
+  dplyr::select(fips_code, county_state, final_id, dist_to_border) %>%
+  dplyr::rename(state_border_id = final_id)
+
+# Add on information for state border strip (final analysis should restrict based on this)
+sbscp_df = sbscp_df %>%
+  dplyr::group_by(state_border_id) %>%
+  dplyr::mutate(
+    num_counties_in_strip = dplyr::n(),
+    num_states_in_strip = dplyr::n_distinct(county_state)
+  ) %>%
+  dplyr::ungroup()
+
+# Save the file
+usethis::use_data(sbscp_df, overwrite = TRUE)
+
+# ---- Couplet and relaxed couplet county assignemnts ---------------------------------------------
+
+# Wrangle the data
+cpcp_df = adjacent_county_df %>%
+  dplyr::filter(county_state != neighbor_state) %>%
+  dplyr::mutate(
+    fips_pair = ifelse(
+      fips_code <= neighbor_fips_code,
+      paste0(fips_code, "-", neighbor_fips_code),
+      paste0(neighbor_fips_code, "-", fips_code)
+    ),
+    fips_obs_1 = ifelse(
+      fips_code <= neighbor_fips_code,
+      fips_code,
+      neighbor_fips_code
+    ),
+    fips_obs_2 = ifelse(
+      fips_code <= neighbor_fips_code,
+      neighbor_fips_code,
+      fips_code
+    )
+  ) %>%
+  dplyr::select(
+    fips_code, neighbor_fips_code, county_state, neighbor_state,
+    fips_pair, fips_obs_1, fips_obs_2
+  )
+
+# Append number of times each county appears in data
+cpcp_df = cpcp_df %>%
+  dplyr::group_by(fips_obs_1) %>%
+  dplyr::mutate(total_fips_obs_1 = dplyr::n()) %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(fips_obs_2) %>%
+  dplyr::mutate(total_fips_obs_2 = dplyr::n()) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(fips_pair_obs = total_fips_obs_1 + total_fips_obs_2) %>%
+  dplyr::arrange(fips_pair_obs, fips_pair)
+
+# Construct couplets - algorithm begins with county pair with least number of matches
+temp_df = cpcp_df
+couplet_vector = NULL
+for(x in unique(temp_df$fips_pair)) {
+  inner_temp_df = temp_df %>%
+    dplyr::filter(fips_pair == x)
+  if(nrow(inner_temp_df) >= 2) {
+    couplet_vector = c(couplet_vector, x)
+    temp_df = temp_df %>%
+      dplyr::filter(!(fips_code %in% unique(inner_temp_df$fips_code)))
+  }
+}
+
+# Assign couplet pair identifier to matched counties
+cpcp_df = cpcp_df %>%
+  dplyr::mutate(
+    cpcp_id = ifelse(
+      fips_pair %in% couplet_vector,
+      fips_pair,
+      NA
+    )
+  )
+
+# Assign couplet pair identifier of neighboring to unmatched counties
+cpcp_df = cpcp_df %>%
+  dplyr::left_join(
+    y = cpcp_df %>%
+      dplyr::distinct(fips_code, .keep_all = TRUE) %>%
+      dplyr::select(fips_code, cpcp_id) %>%
+      dplyr::rename(neighbor_cpcp_id = cpcp_id),
+    by = c("neighbor_fips_code" = "fips_code")
+  ) %>%
+  dplyr::mutate(
+    relaxed_cpcp_id = ifelse(
+      !is.na(cpcp_id),
+      cpcp_id,
+      neighbor_cpcp_id
+    ),
+    sort_flag = ifelse(
+      !is.na(cpcp_id),
+      0,
+      ifelse(
+        !is.na(relaxed_cpcp_id),
+        1,
+        2
+      )
+    )
+  ) %>%
+  dplyr::arrange(
+    fips_code, sort_flag, relaxed_cpcp_id,
+  ) %>%
+  dplyr::distinct(
+    fips_code, .keep_all = TRUE
+  ) %>%
+  dplyr::select(
+    fips_code, county_state, cpcp_id, relaxed_cpcp_id
+  )
+
+# Add on metadata for pairings
+cpcp_df = cpcp_df %>%
+  dplyr::mutate(
+    cpcp_remove_flag = as.numeric(is.na(cpcp_id)),
+    relaxed_cpcp_remove_flag = as.numeric(is.na(relaxed_cpcp_id))
+  )
+
+# Save the file
+usethis::use_data(cpcp_df, overwrite = TRUE)
+
+# Remove temporary files
+rm(temp_df, couplet_vector, inner_temp_df)
+
 
 # ---- One and done pairs -------------------------------------------------------------------------
 
-# ---- Whole border pairs -------------------------------------------------------------------------
+# ---- Cross-border ZIP codes ---------------------------------------------------------------------
 
 
 

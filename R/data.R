@@ -94,12 +94,10 @@
 #' States. The dataset is constructed using the methods in in Dube, Lester, and Reich (RESTAT,
 #' 2010). Specifically, only border counties are included in the dataset, and if a county
 #' is adjacent to p > 1 counties along a border, then the county will have p > 1 replicates in
-#' the dataset. Cross-border county pairs are uniquely identified by \code{cbcp_id}.
-#'
-#' Additional metadata:
-#' Number of unique border counties = 1,184
-#' Number of unique cross-border county pairs = 1,308
-#' Distribution of number of pairs for counties: 1 (256), 2 (586), 3 (239), 4 (63), 5+ (40)
+#' the dataset. Cross-border county pairs are uniquely identified by \code{cbcp_id}. Additional
+#' metadata: (1) Number of unique border counties = 1,184 (2) Number of unique cross-border county
+#' pairs = 1,308 (3) Distribution of number of pairs for counties: 1 (256), 2 (586), 3 (239),
+#' 4 (63), 5+ (40)
 #'
 #' @format A data frame with 2,616 rows and 15 variables:
 #' \describe{
@@ -118,7 +116,56 @@
 #' @source See \code{adjacent_county_df}.
 "cbcp_df"
 
+#' State border strip county assignments.
+#'
+#' A dataset that assigns each border county to a unique state border pair strip (e.g., AL-FL).
+#' For counties that reside along multiple state-border strips (e.g., AZ-NV, NV-UT), the county
+#' is assigned to the state-border strip to which its center of population is closest. If a county
+#' is closest to a state-border strip that it is not adjacent with, the next closest adjacent
+#' state-border strip is chosen. State-border pair strips are identified by \code{state_border_id}.
+#'
+#' @format A data frame with 1,184 rows and 3 variables:
+#' \describe{
+#'   \item{fips_code}{County FIPS code, in original string format. Unique identifier.}
+#'   \item{county_state}{State postal code corresponding to FIPS code.}
+#'   \item{state_border_id}{Border identifier for closest state border strip.}
+#'   \item{dist_to_border}{Distance (in miles) of population center to the closest adjacent
+#'   state border strip.}
+#'   \item{num_counties_in_strip}{Number of unique adjacent counties belong to state border pair
+#'   strip. Fixed effect specifications will eliminate those with a single county.}
+#'   \item{num_states_in_strip}{Number of unique states corresponding to unique adjacent counties
+#'   that belong to the state border pair strip. Fixed effect specifications focused on cross-
+#'   border variation will eliminate those with a single state in the state border pair.}
+#' }
+#' @source See \code{adjacent_county_df}.
+"sbscp_df"
 
-
+#' Couplet and relaxed couplet county assignments.
+#'
+#' A dataset that assigns each county to a unique cluster using the "couplet" algorithm. Couplet
+#' clusters are defined as cross-border county pairs in which each constituent county does not
+#' appear in any other cross-border county pairs. Because each border county may belong to several
+#' cross-border county pairs, the "couplet" algorithm is needed to partition the space with the
+#' goal of maximizing the total number of couplet clusters. Couplet clusters are identified by
+#' \code{cpcp_id}; some counties are excluded from any couplet clusters by the algorithm. To
+#' resolve the issue of non-assignment of some border counties, the \code{relaxed_cpcp_id}
+#' identifier assigns non-matched border counties to the couplet their cross-borde neighbor.
+#' Metadata includes: (1) 499 unique couplet clusters mapped to 998 border counties, (2) 186
+#' border counties without a matched couplet cluster, (3) 499 unique relaxed couplet clusters
+#' mapped to 1,183 border counties, (4) 1 border county without a matched relaxed couplet cluster.
+#'
+#' @format A data frame with 1,184 rows and 6 variables:
+#' \describe{
+#'   \item{fips_code}{County FIPS code, in original string format. Unique identifier.}
+#'   \item{county_state}{State postal code corresponding to FIPS code.}
+#'   \item{cpcp_id}{Couplet cluster pair identifier.}
+#'   \item{relaxed_cpcp_id}{Relaxed couplet cluster pair identifier.}
+#'   \item{cpcp_remove_flag}{Binary flag equal to one if a county is unmatched to a couplet
+#'   cluster.}
+#'   \item{relaxed_cpcp_remove_flag}{Binary flag equal to one if a county is unmatched to a
+#'   relaxed couplet cluster.}
+#' }
+#' @source See \code{adjacent_county_df}.
+"cpcp_df"
 
 

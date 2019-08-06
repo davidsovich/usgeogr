@@ -29,12 +29,9 @@ A dataset containing all of the unique cross-border county pairs in the continen
 States. The dataset is constructed using the methods in in Dube, Lester, and Reich (RESTAT,
 2010). Specifically, only border counties are included in the dataset, and if a county
 is adjacent to p > 1 counties along a border, then the county will have p > 1 replicates in
-the dataset. Cross-border county pairs are uniquely identified by \code{cbcp_id}.
-}
-\details{
-Additional metadata:
-Number of unique border counties = 1,184
-Number of unique cross-border county pairs = 1,308
-Distribution of number of pairs for counties: 1 (256), 2 (586), 3 (239), 4 (63), 5+ (40)
+the dataset. Cross-border county pairs are uniquely identified by \code{cbcp_id}. Additional
+metadata: (1) Number of unique border counties = 1,184 (2) Number of unique cross-border county
+pairs = 1,308 (3) Distribution of number of pairs for counties: 1 (256), 2 (586), 3 (239),
+4 (63), 5+ (40)
 }
 \keyword{datasets}

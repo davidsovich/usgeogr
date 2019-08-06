@@ -7,11 +7,11 @@
 zip_dist(zip_one, zip_two, miles = TRUE)
 }
 \arguments{
+\item{zip_one}{ZIP code of first ZCTA. Order does not matter.}
+
+\item{zip_two}{ZIP code of second ZCTA. Order does not matter.}
+
 \item{miles}{Binary flag for whether to return distance in miles (TRUE) or kilometers (FALSE).}
-
-\item{fips_one}{ZIP code of first ZCTA. Order does not matter.}
-
-\item{fips_two}{ZIP code of second ZCTA. Order does not matter.}
 }
 \description{
 \code{zip_dist} measures the geographic distance between two ZCTAs. The location of each
