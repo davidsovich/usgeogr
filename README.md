@@ -75,7 +75,7 @@ development version from Github:
 
 ``` r
 library("devtools")
-devtools::install_github("davidsovich/usgeogr")
+devtools::install_github("davidsovich/usgeogr", build_vignettes = TRUE)
 ```
 
 ## Contact
