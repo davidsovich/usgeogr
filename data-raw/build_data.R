@@ -21,6 +21,16 @@ library(tidyverse)
 library(geosphere)
 devtools::load_all()
 
+# ---- Census regions -----------------------------------------------------------------------------
+
+# Load data
+census_df = readr::read_csv(
+  file = "./data-raw/census_codes.csv"
+)
+
+# Save data
+usethis::use_data(census_df, overwrite = TRUE)
+
 # ---- US states ----------------------------------------------------------------------------------
 
 # Load data
@@ -656,7 +666,100 @@ usethis::use_data(mxcp_df, overwrite = TRUE)
 # Remove temporary files
 rm(temp_df)
 
+# ---- County border distance strips --------------------------------------------------------------
+
+# Get county distances to border and closest border segment
+bscp_df = adjacent_county_df %>%
+  dplyr::filter(county_state != neighbor_state) %>%
+  dplyr::distinct(fips_code, .keep_all = TRUE) %>%
+  dplyr::mutate(
+    dist_to_border = county_to_state_border(fips_code)
+  ) %>%
+  dplyr::select(fips_code, county_state, dist_to_border)
+
+# Merge on closest border segment
+bscp_df = bscp_df %>%
+  dplyr::left_join(
+    y = county_x_mile_match(
+      fips_code = bscp_df$fips_code,
+      segment_length = 50
+    ) %>%
+      dplyr::select(fips_code, min_dist, segment_id) %>%
+      dplyr::rename(dist_to_segment = min_dist),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::rename(bscp_id = segment_id)
+
+# Save the file
+usethis::use_data(bscp_df, overwrite = TRUE)
+
 # ---- Cross-border ZIP codes ---------------------------------------------------------------------
+
+# Distance from each ZIP code to x mile long border strips
+temp_df1 = x_mile_match(zip_df$zip_code, segment_length = 20)
+
+# Distance from each ZIP code to one mile long border strips
+temp_df2 = x_mile_match(zip_df$zip_code, segment_length = 1)
+
+# Append on distance to closest border, closest border, and closest 20 mile strip
+cbzip_df = zip_df %>%
+  dplyr::select(zip_code, fips_code, state) %>%
+  dplyr::left_join(
+    y = temp_df2 %>%
+      dplyr::select(-one_of("segment_id")) %>%
+      dplyr::rename(
+        dist_to_border = min_dist,
+        nearest_border = st1st2,
+        nearest_index = bordindx
+      ),
+    by = c("zip_code" = "zip_code")
+  ) %>%
+  dplyr::left_join(
+    y = temp_df1 %>%
+      dplyr::select(zip_code, min_dist, segment_id) %>%
+      dplyr::rename(
+        dist_to_segment_id = min_dist,
+        cb_segment_id = segment_id
+      ),
+    by = c("zip_code" = "zip_code")
+  )
+
+# Append on cross-border county matches
+cbzip_df = cbzip_df %>%
+  dplyr::left_join(
+    y = sbscp_df %>%
+      dplyr::select(fips_code, state_border_id),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = cpcp_df %>%
+      dplyr::select(fips_code, cpcp_id, relaxed_cpcp_id),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = mxcp_df %>%
+      dplyr::select(fips_code, mxcp_id , relaxed_mxcp_id),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = adjacent_county_df %>%
+      dplyr::filter(county_state != neighbor_state) %>%
+      dplyr::distinct(fips_code, .keep_all = TRUE) %>%
+      dplyr::mutate(border_county_flag = 1) %>%
+      dplyr::select(fips_code, border_county_flag),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::mutate(
+    border_county_flag = as.numeric(!is.na(border_county_flag))
+  )
+
+# Save the file
+usethis::use_data(cbzip_df, overwrite = TRUE)
+
+# Remove temporary files
+rm(temp1_df, temp2_df)
+
+
 
 
 

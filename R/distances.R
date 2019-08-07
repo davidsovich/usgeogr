@@ -194,7 +194,6 @@ zip_dist = function(zip_one, zip_two, miles = TRUE) {
   }
 }
 
-
 #' Distance between ZCTA centroids and nearest state border.
 #'
 #' \code{zip_to_state_border} outputs the minimum distance between a ZCTA centroid and the
@@ -209,20 +208,20 @@ zip_dist = function(zip_one, zip_two, miles = TRUE) {
 #' @examples
 #' zip_to_state_border(fips_one = "89128", return_state_border_id = FALSE, miles = TRUE)
 #' zip_to_state_border(fips_one = temp_df$zip_code, return_state_border_id = TRUE)
-zip_to_state_border = function(zip_code, zip_alpha) {
+zip_to_state_border = function(zip_code, return_state_border_id = FALSE, miles = TRUE) {
   output_df = data.frame(
-    fips_code = fips_code,
+    zip_code = zip_code,
     stringsAsFactors = FALSE
   )
   temp_df = output_df %>%
     dplyr::left_join(
-      y = county_df %>%
-        dplyr::select(fips_code, lat, long),
-      by = c("fips_code" = "fips_code")
+      y = zip_df %>%
+        dplyr::select(zip_code, lat, long),
+      by = c("zip_code" = "zip_code")
     ) %>%
     dplyr::filter(!is.na(lat), !is.na(long)) %>%
-    dplyr::distinct(fips_code, .keep_all = TRUE)
-  for(i in c(1:length(temp_df$fips_code))) {
+    dplyr::distinct(zip_code, .keep_all = TRUE)
+  for(i in c(1:length(temp_df$zip_code))) {
     inner_df = temp_df[i, ]
     dist_vec = as.numeric(
       geosphere::distm(
@@ -241,7 +240,7 @@ zip_to_state_border = function(zip_code, zip_alpha) {
     ) / 1000
     if(miles == TRUE) { dist_vec = dist_vec*0.621371 }
     temp_store_data = data.frame(
-      fips_code = inner_df$fips_code,
+      zip_code = inner_df$zip_code,
       min_dist = dist_vec[which.min(dist_vec)],
       bordindx = border_coord_df[which.min(dist_vec), "bordindx"],
       state_border_id = border_coord_df[which.min(dist_vec), "st1st2"],
@@ -259,7 +258,7 @@ zip_to_state_border = function(zip_code, zip_alpha) {
   output_df = output_df %>%
     dplyr::left_join(
       y = store_data,
-      by = c("fips_code" = "fips_code")
+      by = c("zip_code" = "zip_code")
     )
   if(return_state_border_id == TRUE) {
     output_df$state_border_id

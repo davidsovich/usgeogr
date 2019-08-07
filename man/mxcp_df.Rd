@@ -24,12 +24,12 @@ mxcp_df
 \description{
 A dataset that assigns each border county to a unique cluster using the "max-method" algorithm
 and the "relaxed max-method" algorithm. See vignette for description of the algorithm. Max-method
-clusters are identified by `mxcp_id`; relaxed max-method clusters are identified by
-`relaxed_mxcp_id`. If there is only one county in a cluster, then the algorithm assigns the
+clusters are identified by \code{mxcp_id}; relaxed max-method clusters are identified by
+\code{relaxed_mxcp_id}. If there is only one county in a cluster, then the algorithm assigns the
 identifier to be NA. Metadata: (1) 256 unique non-null max-method and relaxed max-method
 clusters, (2) 296 counties without an assigned max-method cluster, (3) 120 counties without
-an assigned relaxed max-method cluster, (4) 85 (62) max-method (relaxed max-method) clusters
-with 2 constituent counties, 62 (47) with 3 counties, 53 (52) with 4 counties, 32 (32) with
+an assigned relaxed max-method cluster, (4) 85 (80) max-method (relaxed max-method) clusters
+with 2 constituent counties, 62 (58) with 3 counties, 53 (52) with 4 counties, 32 (32) with
 5 counties, 14 (30) with 6 counties, 7 (22) with 7 counties, 1 (8) with 8 counties, 1 (2) with
 9 counties, and 1 (1) with 10 counties.
 }

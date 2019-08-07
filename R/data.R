@@ -1,5 +1,19 @@
 #' U.S. states
 #'
+#' A dataset containing census region and division identifiers for the 50 U.S. states and D.C.
+#'
+#' @format A data frame with 51 rows and 5 variables:
+#' \describe{
+#'   \item{census_region}{Census region of state.}
+#'   \item{census_division}{Census division of state.}
+#'   \item{state_fips}{Two-digit FIPS code for state.}
+#'   \item{state_code}{Post service state code.}
+#'   \item{state_name}{Name of state.}
+#' }
+"census_df"
+
+#' U.S. states
+#'
 #' A dataset containing identifiers for the 50 U.S. states and D.C.
 #'
 #' @format A data frame with 51 rows and 2 variables:
@@ -140,6 +154,29 @@
 #' @source See \code{adjacent_county_df}.
 "sbscp_df"
 
+#' Border segment county assignments.
+#'
+#' A dataset that assigns each border county to the closest 50 mile-long border strip. A total of
+#' 73 counties are the only county assigned to a border strip; these counties will be ignored
+#' in any panel estimates. Total of 421 unique border segment identifiers with counties.
+#' Distribution of border segments by number of asssigned counties: 73 with
+#' 1 county, 124 with 2 counties, 97 with 3 counties, 83 with 4 counties, 34 with 5 counties, 4
+#' with 6 counties, 3 with 7 counties, 2 with 8 counties, 1 with 9 counties. Note that only segments
+#' with counties in multiple states will have variation exploited. This breakdown is: 95 segments
+#' with 1 state, 311 segments with 2 stats, and 15 segments with 3 states.
+#'
+#' @format A data frame with 1,184 rows and 5 variables:
+#' \describe{
+#'   \item{fips_code}{County FIPS code, in original string format. Unique identifier.}
+#'   \item{county_state}{State postal code corresponding to FIPS code.}
+#'   \item{dist_to_border}{Distance (in miles) of population center to the closest adjacent
+#'   state border strip.}
+#'   \item{dist_to_segment}{Distance (in miles) to closest 50 mile border segment.}
+#'   \item{bscp_id}{50-mile long border segment identifier.}
+#' }
+#' @source See \code{adjacent_county_df}.
+"bscp_df"
+
 #' Couplet and relaxed couplet county assignments.
 #'
 #' A dataset that assigns each county to a unique cluster using the "couplet" algorithm. Couplet
@@ -195,4 +232,35 @@
 #' @source See \code{adjacent_county_df}.
 "mxcp_df"
 
-
+#' ZIP code border assignments.
+#'
+#' A dataset that facilitates the use of ZIP codes in cross-border analyses. Contains all ZIP
+#' codes in the continental United States (i.e., there is no filtering). Provides the following
+#' identifiers for conducting cross-border analyses: dist_to_border, nearest_borer,
+#' dist_to_segment_id, cb_segment_id, state_border_id, cpcp_id, relaxed_cpcp_id, mxcp_id,
+#' relaxed_mxcp_id, border_county_flag. Includes ZIP codes in and not in border counties, far and
+#' close to state borders or 20 mile long border segments, and those that can and cannot be
+#' mapped to a ZCTA centroid.
+#'
+#' @format A data frame with 38,879 rows and 14 variables:
+#' \describe{
+#'   \item{zip_code}{ZIP code, in original string format. Unique identifier.}
+#'   \item{fips_code}{County FIPS code, in original string format.}
+#'   \item{state}{State postal code corresponding to FIPS code.}
+#'   \item{dist_to_border}{Distance to closest state border, in miles. Null if no ZCTA match.}
+#'   \item{nearest_index}{Nearest border index. Null if no ZCTA match.}
+#'   \item{nearest_border}{Nearest state border. Null if no ZCTA match.}
+#'   \item{dist_to_segment_id}{Distance to closest 20-mile border segment. Null if no ZCTA match.}
+#'   \item{cb_segment_id}{Nearest 20-mile border segment. Null if no ZCTA match.}
+#'   \item{cpcp_id}{Couplet cluster pair identifier for county. Null if not border county or
+#'   if there is no couplet identifier match.}
+#'   \item{relaxed_cpcp_id}{Relaxed couplet cluster pair identifier for county. Null if not border
+#'   county or if there is no relaxed couplet identifier match.}
+#'   \item{mxcp_id}{Max-method cluster identifier for county. Null if not border county or if there
+#'   is no max-method match.}
+#'   \item{relaxed_mxcp_id}{Relaxed max-method cluster identifier for county. Null if not border
+#'   county or if there is no relaxed max-method match.}
+#'   \item{border_county_flag}{Binary flag for whether ZIP resides in a border county.}
+#' }
+#' @source See \code{zip_df}.
+"cbzip_df"

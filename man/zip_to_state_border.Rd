@@ -4,7 +4,8 @@
 \alias{zip_to_state_border}
 \title{Distance between ZCTA centroids and nearest state border.}
 \usage{
-zip_to_state_border(zip_code, zip_alpha)
+zip_to_state_border(zip_code, return_state_border_id = FALSE,
+  miles = TRUE)
 }
 \arguments{
 \item{zip_code}{Five-digit ZIP code of ZCTA}
