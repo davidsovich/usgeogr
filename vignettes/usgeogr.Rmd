@@ -12,6 +12,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+# TO OUTPUT TO PDF, change to output: rmarkdown::pdf_document and open file (top left) Save As. 
+
 ```
 
 ```{r setup, eval = FALSE}
@@ -110,31 +113,35 @@ county pairs. The definition can be traced to Dube, Lester, and Reich (ReSTAT, 2
 
 If the unit of analysis is more granular than the county level (e.g., the individual level), then
 the replicate-based method of Dube, Lester, and Reich (ReSTAT, 2010) cannot be feasibly implemented.
-This is because it will massively increase the sample size (e.g., for individual-level studies).
+This is because it will massively increase the sample size (e.g., for individual-level studies).[^3]
 
 The most commonly used method for addressing this issue is to assign each border county to
 a distinct "cross-border cluster". There are numerous ways to perform this assignment. The 
-`usgeogr` provides the following choices:[^3]
+`usgeogr` provides several choices for assigning border counties to clusters; these assignments 
+are stored in the `cbcounty_df`. Only border counties are contained in `cbcounty_df`.
 
-1. `sbscp_df` assigns border counties to clusters defined by adjacent state border pair segments
-(e.g., AL-FL, NV-UT). If a border county is adjacent to more than one state border segment, then 
-the border county is assigned to the closest border segment to its population center.[^4]
+Each border county can only belong to one cluster under each assignment mechanism.
+The choices for cross-border cluster assignments are:
 
-2. `bscp_df` assigns border counties to clusters defined by 50 mile-long strips along state 
-borders. Some strips only have a single county or a single state assigned (i.e., the variation will
-be ignored in a panel).
+1. State border segments. This method assigns each border county to clusters defined by 
+state border pair segments (e.g., AL-FL, NV-UT, etc.). If a border county is adjacent to more than 
+one state border segment, then the border county is assigned to the closest border segment to its 
+population center.[^4]
 
-3. `cpcp_df` assigns border counties to cross-border clusters using the "couplet" and
+2. Border strip segments. This method assigns each border county to clusters defined by 50 mile-long
+state border strips. 
+
+3. Couplets. This method assigns each border county to a cluster using the "couplet" and 
 "relaxed couplet" algorithms.[^5] The couplet algorithm sequentially assigns counties to clusters 
-of size two (i.e., "couples"). The relaxed couplet algorithm allows for more than two counties per
-cluster. In both algorithms, counties can only belong to one cluster. 
+of size two (i.e., "couples") with an objective of maximizing the total number of matched couplets.
+The relaxed couplet algorithm allows for more than two counties per cluster.
 
-4. `mxcp_df` assigns border counties to cross-border clusters using the "max-method" and
+4. Centers of mass. This method assigns each border county to a cluster using the "max-method" and 
 "relaxed max-method" algorithms.[^6]. The max-method algorithm assigns counties to clusters
-based on their centrality and the number of counties they border. In both algorithms, counties 
-can only belogn to one cluster. 
+based on their centrality and the number of counties they border.
 
 Note that some counties may be unassigned to a cluster using the couplet or max-method algorithms.
+These should be removed prior to assigning any fixed effects or factors (to avoid null assignment).
 For analyses at the within-county level, the county cluster identifiers should simply be appended
 to the units of analysis. Analysts can also hand-pair counties if they are working with a small
 subset of states. 
@@ -196,7 +203,8 @@ individual) is unknown. To resolve this issue, ZCTA centroids are commonly used 
 a unit's location. 
 
 `cbzip_df` provides the distance from each ZCTA centroid to the nearest state border.[^7] It also
-assigns each ZCTA to its nearest 20 mile long border strip. 
+assigns each ZCTA to its nearest 20 mile long border strip, along with adding identifiers for
+whether the ZIP code resides in a border county and the county's cross-border cluster assignment.
 
 
 [^7]: For ZIP codes that cannot be matched to a ZCTA, these distance measures and assignments

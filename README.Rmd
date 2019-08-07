@@ -1,31 +1,39 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 # usgeogr
 
-An R data package containing information on U.S. geographic regions.
-Best used for streamlining spatial identification strategies.
+An R data package containing information on U.S. geographic regions. Best used for streamlining spatial 
+identification strategies. 
 
 ## Highlights
 
-  - Datasets on commonly analyzed U.S. geographic units, such as states,
-    counties, and ZIP codes.
+- Datasets on commonly analyzed U.S. geographic units, such as states, counties, and ZIP codes.
 
-  - Datasets for implementing cross-border identification strategies,
-    such as the contiguous cross-border county pair design in Dube,
-    Lester, and Reich (ReSTAT, 2010).
+- Datasets for implementing cross-border identification strategies, such as the contiguous
+cross-border county pair design in Dube, Lester, and Reich (ReSTAT, 2010). 
 
-  - Helper functions for calculating distances between U.S. geographic
-    regions and distances to state borders.
+- Helper functions for calculating distances between U.S. geographic regions
+and distances to state borders. 
 
 ## Usage
 
-A detailed usage description can be found in the
-[vignette](https://github.com/davidsovich/usgeogr/blob/master/vignettes/usgeogr.pdf).
+A detailed usage description can be found in the [vignette](https://github.com/davidsovich/usgeogr/blob/master/vignettes/usgeogr.pdf). 
 
 Examples:
 
-``` r
+```{r, eval = FALSE}
 
 #  U.S. geographic region datasets
   
@@ -66,14 +74,15 @@ Examples:
   # Distance of ZIP to nearest state border
   zip_to_state_border(zip_df$zip_code)
   
+
 ```
+
 
 ## Installation
 
-The usgeogr package is not available on CRAN. You can install the
-development version from Github:
+The usgeogr package is not available on CRAN. You can install the development version from Github:
 
-``` r
+```{r, eval = FALSE}
 library("devtools")
 devtools::install_github("davidsovich/usgeogr")
 ```
@@ -84,4 +93,4 @@ davidsovich `AT` uky.edu
 
 ## History
 
-  - August 7, 2019: Developmental release
+- August 7, 2019: Developmental release

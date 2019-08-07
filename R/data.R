@@ -232,6 +232,31 @@
 #' @source See \code{adjacent_county_df}.
 "mxcp_df"
 
+
+#' County border assignments.
+#'
+#' A dataset of border counties and their cross-border county cluster assignments under various
+#' mappings. See descriptions for \code{sbscp_df}, \code{bscp_df}, \code{cpcp_df}, and
+#' \code{mxcp_df} for metadata on mappings. After choosing a mapping, analysts should remove
+#' counties with null cluster assignments (to prevent null values mapping into factors) and
+#' clusters with only one distinct county or state.
+#'
+#' @format A data frame with 1,184 rows and 10 variables:
+#' \describe{
+#'   \item{fips_code}{County FIPS code, in original string format. Unique identifier.}
+#'   \item{county_state}{State postal code corresponding to FIPS code.}
+#'   \item{state_border_id}{Cluster assignment for nearest state border.}
+#'   \item{dist_to_border}{Distance, in miles, to nearest state border from population center.}
+#'   \item{segment_id}{Cluster assignment for nearest 50-mile long border strip.}
+#'   \item{dist_to_segment}{Distance, in miles, to nearest 50-mile long border strip.}
+#'   \item{cpcp_id}{Cluster assignment using "couplet" algorithm.}
+#'   \item{relaxed_cpcp_id}{Cluster assignment using "relaxed couplet" algorithm.}
+#'   \item{mxcp_id}{Cluster assignment using "max-method" algorithm.}
+#'   \item{relaxed_mxcp_id}{Cluster assignment using "relaxed max-method" algorithm.}
+#' }
+#' @source See \code{adjacent_county_df}.
+"cbcounty_df"
+
 #' ZIP code border assignments.
 #'
 #' A dataset that facilitates the use of ZIP codes in cross-border analyses. Contains all ZIP

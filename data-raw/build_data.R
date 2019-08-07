@@ -1,17 +1,7 @@
 ##################################################################################################
 #
 # Program name: build_data
-# Description: This program builds the base US geographic datasets for the package.
-# Inputs: Various geographic data from US government (e.g., census). See metadata file in
-#         data_raw folder for sourcing locations.
-# Ouputs: The following data.frames to the data folder:
-#         1. state_df
-#         2. adjacent_county_df
-#         3. county_df
-#         4. zip_df
-#         5. border_coord_df
-#         6.
-#         7.
+# Description: This program builds the U.S. geographic datasets for the package.
 #
 ###################################################################################################
 
@@ -521,7 +511,6 @@ usethis::use_data(cpcp_df, overwrite = TRUE)
 # Remove temporary files
 rm(temp_df, couplet_vector, inner_temp_df)
 
-
 # ---- Max neighbor county assignments  -----------------------------------------------------------
 
 # Wrangle the data
@@ -692,6 +681,56 @@ bscp_df = bscp_df %>%
 
 # Save the file
 usethis::use_data(bscp_df, overwrite = TRUE)
+
+# ---- Cross-border counties ----------------------------------------------------------------------
+
+# Restrict to border counties and merge on identifiers from methods
+cbcounty_df = adjacent_county_df %>%
+  dplyr::filter(county_state != neighbor_state) %>%
+  dplyr::distinct(fips_code, .keep_all = TRUE) %>%
+  dplyr::select(fips_code, county_state) %>%
+  dplyr::left_join(
+    y = sbscp_df %>%
+      dplyr::select(
+        fips_code,
+        state_border_id,
+        dist_to_border
+      ),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = bscp_df %>%
+      dplyr::select(
+        fips_code,
+        bscp_id,
+        dist_to_segment,
+      ) %>%
+      dplyr::rename(
+        segment_id = bscp_id
+      ),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = cpcp_df %>%
+      dplyr::select(
+        fips_code,
+        cpcp_id,
+        relaxed_cpcp_id
+      ),
+    by = c("fips_code" = "fips_code")
+  ) %>%
+  dplyr::left_join(
+    y = mxcp_df %>%
+      dplyr::select(
+        fips_code,
+        mxcp_id,
+        relaxed_mxcp_id
+      ),
+    by = c("fips_code" = "fips_code")
+  )
+
+# Save the file
+usethis::use_data(cbcounty_df, overwrite = TRUE)
 
 # ---- Cross-border ZIP codes ---------------------------------------------------------------------
 
